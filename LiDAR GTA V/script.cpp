@@ -228,6 +228,7 @@ void ScriptMain()
 	double parameters[6];
 	int range;
 	std::string filename;
+	std::string label_filename;
 	std::string ignore;
 	std::ifstream inputFile;
 
@@ -277,7 +278,8 @@ void ScriptMain()
 				
 				lidar(hCount, vCount, vertexCount,
 					parameters[4], parameters[5], rayArray,
-					range, "LiDAR GTA V/" + filename + "_" + std::to_string(file_number) + ".bin");
+					range, "LiDAR GTA V/" + filename + "_" + std::to_string(file_number) + ".txt", 
+							"LiDAR GTA V/" + label_filename + "_" + std::to_string(file_number) + ".txt");
 				file_number++;
 
 				auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
