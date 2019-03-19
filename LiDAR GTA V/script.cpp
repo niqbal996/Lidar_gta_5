@@ -147,14 +147,19 @@ void angleOffsetRaycast(const double angleOffsetX, const double angleOffsetZ, co
 
 void lidar(const int hCount, const int vCount, const long int vertexCount,
 			const double hStep, const double vStep, std::vector<std::vector<ray>>& rayArray,
-			int range, const std::string& filePath)
+			int range, const std::string& filePath, const std::string& filePath_label)
 {
 	Timer _t_tot,_t_core;
 	std::ofstream fileOutput;
 	fileOutput.open(filePath);
-	fileOutput << "ply\nformat ascii 1.0\nelement vertex " + std::to_string((int)vertexCount)\
+	std::ofstream fileOutput_label;
+	fileOutput_label.open(filePath_label);
+	/*fileOutput << "ply\nformat ascii 1.0\nelement vertex " + std::to_string((int)vertexCount)\
 		+ "\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n";
-
+*/	
+	/*Seperate the values for point cloud and the ground truth values.*/
+	fileOutput << "\nproperty float x\nproperty float y\nproperty float z\n";
+	fileOutput_label << "property uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n";
 	//GAMEPLAY::SET_GAME_PAUSED(true); // %TODO: Delete this? Or Make it optional
 	//TIME::PAUSE_CLOCK(true);
 	const auto cam_coord = CAM::GET_GAMEPLAY_CAM_COORD();
