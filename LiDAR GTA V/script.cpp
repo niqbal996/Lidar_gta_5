@@ -85,6 +85,8 @@ struct ray {
 	std::string entityTypeName;
 	int rayResult;
 	int hitEntityHandle;
+	int entity_Type_Instance;
+	bool vehicle;
 };
 
 
@@ -109,6 +111,8 @@ void raycast(ray& result, const Eigen::Vector3f& source, const Eigen::Vector3f& 
 		(ENTITY::DOES_ENTITY_EXIST(result.hitEntityHandle)) ? \
 		ENTITY::GET_ENTITY_TYPE(result.hitEntityHandle):
 		0;
+	int entityInstance = ENTITY::GET_OBJECT_INDEX_FROM_ENTITY_INDEX(result.hitEntityHandle);
+	bool entityVehicle = ENTITY::IS_ENTITY_A_VEHICLE(result.hitEntityHandle);
 	switch (entityType)
 	{
 	case 0:
@@ -119,6 +123,8 @@ void raycast(ray& result, const Eigen::Vector3f& source, const Eigen::Vector3f& 
 		break;
 	case 2:
 		result.entityTypeName = "GTA.Vehicle";
+		result.entity_Type_Instance = entityInstance;
+		result.vehicle = entityVehicle;
 		break;
 	case 3:
 		result.entityTypeName = "GTA.Prop";
@@ -158,8 +164,8 @@ void lidar(const int hCount, const int vCount, const long int vertexCount,
 		+ "\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n";
 */	
 	/*Seperate the values for point cloud and the ground truth values.*/
-	fileOutput << "\nproperty float x\nproperty float y\nproperty float z\n";
-	fileOutput_label << "property uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n";
+	//fileOutput << "\nproperty float x\nproperty float y\nproperty float z\n";
+	//fileOutput_label << "property uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n";
 	//GAMEPLAY::SET_GAME_PAUSED(true); // %TODO: Delete this? Or Make it optional
 	//TIME::PAUSE_CLOCK(true);
 	const auto cam_coord = CAM::GET_GAMEPLAY_CAM_COORD();
@@ -179,12 +185,16 @@ void lidar(const int hCount, const int vCount, const long int vertexCount,
 	for (int i=0;i<hCount;i++)
 	{
 		std::string vertexData = "";
+		std::string label_Data = "";
 
 		for (int j=0;j<vCount;j++)
 		{
 			std::string entityName3 = "None";
+			int entityInstance = 0;
 			int entityHash = 0;
 			unsigned char r = 0; unsigned char g = 0; unsigned char b = 0;
+			uint8_t class_instance = 0;
+			bool vehicle;
 			angleOffsetRaycast(i*hStep, j*vStep, range,
 				rayArray[i][j],cam_coord_e,cam_rot_e,_t_core);
 			const auto& result = rayArray[i][j];
@@ -195,9 +205,12 @@ void lidar(const int hCount, const int vCount, const long int vertexCount,
 			if (result.hitEntityHandle != -1)
 			{
 				entityName3 = result.entityTypeName;
+				entityInstance = result.entity_Type_Instance;
+				vehicle = result.vehicle;
 				if (entityName3 == "GTA.Vehicle")
 				{
 					r = 255; g = 0; b = 0;
+					class_instance = entityInstance;
 				}
 				else if (entityName3 == "GTA.Ped")
 				{
@@ -208,9 +221,11 @@ void lidar(const int hCount, const int vCount, const long int vertexCount,
 					r = 0; g = 0; b = 255;
 				}
 			}
-			vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + "\n";
+			vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(class_instance) + " " + std::to_string(vehicle) + "\n";
+			label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(class_instance) + "\n";
 		}
 		fileOutput << vertexData;
+		fileOutput_label << label_Data;
 	}
 	fileOutput.close();
 	//GAMEPLAY::SET_GAME_PAUSED(false);
@@ -252,6 +267,7 @@ void ScriptMain()
 			}
 			inputFile >> ignore >> ignore >> range;
 			inputFile >> ignore >> ignore >> filename;
+			inputFile >> ignore >> ignore >> label_filename;
 			inputFile.close();
 			
 
