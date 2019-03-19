@@ -221,7 +221,7 @@ void lidar(const int hCount, const int vCount, const long int vertexCount,
 					r = 0; g = 0; b = 255;
 				}
 			}
-			vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(class_instance) + " " + std::to_string(vehicle) + "\n";
+			vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(class_instance) + " " + std::to_string(vehicle) + "\n";
 			label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(class_instance) + "\n";
 		}
 		fileOutput << vertexData;
@@ -234,18 +234,24 @@ void lidar(const int hCount, const int vCount, const long int vertexCount,
 	std::string msg = "Lidar(). _tot: " + to_string_with_precision(_t_tot.elapsed()) \
 		+ "_core: " + to_string_with_precision(_t_core.elapsed())\
 		;
-	notificationOnLeft(msg.c_str());
+	//notificationOnLeft(msg.c_str());
 }
 void ScriptMain()
 {
 	srand(GetTickCount());
 	bool init = true;
 	double parameters[6];
+	double timer;
 	int range;
 	std::string filename;
 	std::string label_filename;
 	std::string ignore;
 	std::ifstream inputFile;
+	int first_file_number;
+	int last_file_number;
+	DWORD start_time;
+	DWORD end_time;
+	DWORD elapsed_time;
 
 	int hCount, vCount; long int vertexCount;
 	int file_number = 0;
@@ -254,46 +260,49 @@ void ScriptMain()
 	typedef std::chrono::high_resolution_clock clock_;
 	typedef std::chrono::duration<double, std::ratio<1> > second_;
 	while (true)
-	{
-		if (init) {
-			inputFile.open("LiDAR GTA V/LiDAR GTA V.cfg");
-			if (inputFile.bad()) {
-				notificationOnLeft("Input file not found. Please re-install the plugin.");
-				continue;
+	{	
+		if(IsKeyJustUp(VK_F6))
+			if (init) {
+				inputFile.open("LiDAR GTA V/LiDAR GTA V.cfg");
+				if (inputFile.bad()) {
+					notificationOnLeft("Input file not found. Please re-install the plugin.");
+					continue;
+				}
+				/*Ignore the first line of the config file*/
+				inputFile >> ignore >> ignore >> ignore >> ignore >> ignore;
+				for (int i = 0; i < 6; i++) {
+					/*Read in parameter values of all 5 LiDAR parameters*/
+					inputFile >> ignore >> ignore >> parameters[i];
+				}
+				/*LiDAR range and filenames*/
+				inputFile >> ignore >> ignore >> range;
+				inputFile >> ignore >> ignore >> filename;
+				inputFile >> ignore >> ignore >> label_filename;
+				inputFile.close();
+			
+				/*Assumes uniform sampling of points and gives fixed vertex Count different that real LiDAR sensor.*/
+				hCount = static_cast <int> (std::floor((parameters[1] - parameters[0]) / parameters[4]));
+				vCount = static_cast <int> (std::floor((parameters[3] - parameters[2]) / parameters[5]));
+				vertexCount = static_cast <long int>(hCount) * static_cast <long int>(vCount);
+
+			
+				/*What is this?*/
+				rayArray.resize(hCount);
+				for (auto& rArray : rayArray) {
+					rArray.resize(vCount);
+				}
+				init = false;
+			
 			}
-			inputFile >> ignore >> ignore >> ignore >> ignore >> ignore;
-			for (int i = 0; i < 6; i++) {
-				inputFile >> ignore >> ignore >> parameters[i];
-			}
-			inputFile >> ignore >> ignore >> range;
-			inputFile >> ignore >> ignore >> filename;
-			inputFile >> ignore >> ignore >> label_filename;
-			inputFile.close();
-			
-
-			hCount = static_cast <int> (std::floor((parameters[1] - parameters[0]) / parameters[4]));
-			vCount = static_cast <int> (std::floor((parameters[3] - parameters[2]) / parameters[5]));
-			vertexCount = static_cast <long int>(hCount) * static_cast <long int>(vCount);
-
-			
-
-			rayArray.resize(hCount);
-			for (auto& rArray : rayArray) {
-				rArray.resize(vCount);
-			}
-			init = false;
-			
-		}
-		if (IsKeyJustUp(VK_F6))
-		{
-			static const std::chrono::seconds lidar_screenshot_period(30); // snap every 0.2 seconds snap every half second. 
-			
-
-			while (!IsKeyJustUp(VK_F6)) {
+			elapsed_time = GetTickCount() - start_time;
+			if (elapsed_time > 30000)				/*in milli seconds. if more than 30 milliseconds take a lidar screen shot*/
+			{	
+				start_time = GetTickCount();
+				static const std::chrono::seconds lidar_screenshot_period(30); // snap every 0.2 seconds snap every half second. 	
+			//if (elapsed_time > 30000){			/*in milli seconds. if more than 30 milliseconds take a lidar screen shot*/
 				const auto t1 = std::chrono::high_resolution_clock::now();
-				
 				lidar(hCount, vCount, vertexCount,
-					parameters[4], parameters[5], rayArray,
+					parameters[4], parameters[5], rayArray,			/*rayArray contains our point cloud data*/
 					range, "LiDAR GTA V/" + filename + "_" + std::to_string(file_number) + ".txt", 
 							"LiDAR GTA V/" + label_filename + "_" + std::to_string(file_number) + ".txt");
 				file_number++;
@@ -303,13 +312,16 @@ void ScriptMain()
 				
 				int wait = (lidar_screenshot_period > elapsed) ? (lidar_screenshot_period - elapsed).count() : 0;
 				
-				notificationOnLeft(
+				/*notificationOnLeft(
 					"_t_" + to_string_with_precision(elapsed.count()) +
 					"  _p_" + to_string_with_precision(lidar_screenshot_period.count())
-				);
+				);*/
+				notificationOnLeft("Point Cloud sample number " + std::to_string(file_number) + " Generated.");
+				notificationOnLeft("Resumed game.");
+				/*notificationOnLeft(to_string_with_precision(last_file_number - first_file_number) + "files just written");*/
 				WAIT(wait);
+		//}
 			}
-		}
-		WAIT(0);
+			WAIT(0);
 	}
 }
