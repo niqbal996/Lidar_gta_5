@@ -28,7 +28,7 @@ struct ray {
 	std::string entityTypeName;
 	int rayResult;
 	int hitEntityHandle;
-	int class_instance = 0;		//only consider for cars. 0 is placeholder.
+	int class_instance = 0;
 };
 
 ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectFlags) {
@@ -44,13 +44,11 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	hitCoordinates.y = 0;
 	hitCoordinates.z = 0;
 	Vector3 surfaceNormal;
-	std::string occlusion;
 	surfaceNormal.x = 0;
 	surfaceNormal.y = 0;
 	surfaceNormal.z = 0;
 	int rayResult = WORLDPROBE::_GET_RAYCAST_RESULT(rayHandle, &hit, &hitCoordinates, &surfaceNormal, &hitEntityHandle);
 	int entityInstance = ENTITY::GET_OBJECT_INDEX_FROM_ENTITY_INDEX(result.hitEntityHandle);			//Instance ID of the class of the object hit
-	bool entityoccluded = ENTITY::IS_ENTITY_OCCLUDED(result.hitEntityHandle);
 	result.rayResult = rayResult;
 	result.hit = hit;
 	result.hitCoordinates = hitCoordinates;
@@ -90,9 +88,9 @@ ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range) {
 void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertFovMax, double horiStep, double vertStep, int range, std::string filePath, std::string filePath_label)
 {
 	GAMEPLAY::SET_GAME_PAUSED(true);
-	Vector3 origin = CAM::GET_GAMEPLAY_CAM_COORD();
 	TIME::PAUSE_CLOCK(true);
-	double vertexsCount = (horiFovMax - horiFovMin) * (1 / horiStep) * (vertFovMax - vertFovMin) * (1 / vertStep);
+	double vertexCount = (horiFovMax - horiFovMin) * (1 / horiStep) * (vertFovMax - vertFovMin) * (1 / vertStep);
+	Vector3 origin = CAM::GET_GAMEPLAY_CAM_COORD();
 	std::ofstream fileOutput;
 	std::ofstream fileOutput_label_data;
 	fileOutput.open(filePath);
@@ -128,7 +126,10 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 					r = 0; g = 0; b = 255;
 				}
 			}
-			vertexData += std::to_string(result.hitCoordinates.x / origin.x) + " " + std::to_string(result.hitCoordinates.y / origin.y) + " " + std::to_string(result.hitCoordinates.z / origin.z) + " " + std::to_string(0) + "\n";	//place holder values for reflectance
+			result.hitCoordinates.x = result.hitCoordinates.x - origin.x;
+			result.hitCoordinates.y = result.hitCoordinates.y - origin.y;
+			result.hitCoordinates.z = result.hitCoordinates.z - origin.z;
+			vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(0) + "\n";	//place holder values for reflectance
 			label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(result.class_instance) + "\n";		//placeholder value for instance values		
 		}
 		fileOutput << vertexData;
@@ -155,7 +156,7 @@ void ScriptMain()
 	std::string ignore;
 	double parameters[6];
 	while (true)
-	{	
+	{
 		if (IsKeyJustUp(VK_F6))
 			if (init) {
 				inputFile.open("LiDAR GTA V/LiDAR GTA V.cfg");
@@ -175,17 +176,17 @@ void ScriptMain()
 				inputFile >> ignore >> ignore >> label_filename;
 				inputFile.close();
 			}
-			elapsed_time = GetTickCount() - start_time;
-			if (elapsed_time > 30000)				/*in milli seconds. if more than 30 milliseconds take a lidar screen shot*/
-			{
-				start_time = GetTickCount();
-				lidar(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], range,
-					"LiDAR GTA V/velodyne/" + filename + "_" + std::to_string(file_number) + ".txt",
-					"LiDAR GTA V/labels/" + label_filename + "_" + std::to_string(file_number) + ".txt");
-				file_number++;
-				notificationOnLeft("Point Cloud sample number " + std::to_string(file_number) + " Generated.");
-				notificationOnLeft("Resumed game.");
-			}
+		elapsed_time = GetTickCount() - start_time;
+		if (elapsed_time > 30000)				/*in milli seconds. if more than 30 milliseconds take a lidar screen shot*/
+		{
+			start_time = GetTickCount();
+			lidar(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], range,
+				"LiDAR GTA V/velodyne/" + filename + "_" + std::to_string(file_number) + ".txt",
+				"LiDAR GTA V/labels/" + label_filename + "_" + std::to_string(file_number) + ".txt");
+			file_number++;
+			notificationOnLeft("Point Cloud sample number " + std::to_string(file_number) + " Generated.");
+			notificationOnLeft("Resumed game.");
+		}
 		WAIT(0);
-	}		
+	}
 }
