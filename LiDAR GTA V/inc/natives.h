@@ -253,7 +253,8 @@ namespace ENTITY
 	static void SET_ENTITY_MAX_HEALTH(Entity entity, int value) { invoke<Void>(0x166E7CF68597D8B5, entity, value); } // 0x166E7CF68597D8B5 0x96F84DF8
 	static float GET_ENTITY_HEIGHT(Entity entity, float X, float Y, float Z, BOOL atTop, BOOL inWorldCoords) { return invoke<float>(0x5A504562485944DD, entity, X, Y, Z, atTop, inWorldCoords); } // 0x5A504562485944DD 0xEE443481
 	static float GET_ENTITY_HEIGHT_ABOVE_GROUND(Entity entity) { return invoke<float>(0x1DD55701034110E5, entity); } // 0x1DD55701034110E5 0x57F56A4D
-	static void GET_ENTITY_MATRIX(Entity entity, Any* p1, Any* p2, Vector3* p3, Vector3* p4) { invoke<Void>(0xECB2FC7235A7D137, entity, p1, p2, p3, p4); } // 0xECB2FC7235A7D137 0xEB9EB001
+	//static void GET_ENTITY_MATRIX(Entity entity, Any* p1, Any* p2, Vector3* p3, Vector3* p4) { invoke<Void>(0xECB2FC7235A7D137, entity, p1, p2, p3, p4); } // 0xECB2FC7235A7D137 0xEB9EB001
+	static void GET_ENTITY_MATRIX(Entity entity, Vector3* p1, Vector3* p2, Vector3* p3, Vector3* p4) { invoke<Void>(0xECB2FC7235A7D137, entity, p1, p2, p3, p4); } // 0xECB2FC7235A7D137 0xEB9EB001
 	static Hash GET_ENTITY_MODEL(Entity entity) { return invoke<Hash>(0x9F47B058362C84B5, entity); } // 0x9F47B058362C84B5 0xDAFCB3EC
 	static Vector3 GET_OFFSET_FROM_ENTITY_GIVEN_WORLD_COORDS(Entity entity, float posX, float posY, float posZ) { return invoke<Vector3>(0x2274BC1C4885E333, entity, posX, posY, posZ); } // 0x2274BC1C4885E333 0x6477EC9E
 	static Vector3 GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(Entity entity, float offsetX, float offsetY, float offsetZ) { return invoke<Vector3>(0x1899F328B0E12848, entity, offsetX, offsetY, offsetZ); } // 0x1899F328B0E12848 0xABCF043A
