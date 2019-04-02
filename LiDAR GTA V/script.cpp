@@ -53,7 +53,6 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	Vector3 min;
 	Vector3 max;
 	Vector3 hitCoordinates;
-
 	hitCoordinates.x = 0;
 	hitCoordinates.y = 0;
 	hitCoordinates.z = 0;
@@ -61,7 +60,6 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	surfaceNormal.x = 0;
 	surfaceNormal.y = 0;
 	surfaceNormal.z = 0;
-	
 	int rayResult = WORLDPROBE::_GET_RAYCAST_RESULT(rayHandle, &hit, &hitCoordinates, &surfaceNormal, &hitEntityHandle);
 	int entityInstance = ENTITY::GET_OBJECT_INDEX_FROM_ENTITY_INDEX(result.hitEntityHandle);			//Instance ID of the class of the object hit
 	result.rayResult = rayResult;
@@ -70,78 +68,83 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	result.surfaceNormal = surfaceNormal;
 	result.hitEntityHandle = hitEntityHandle;
 	std::string entityTypeName = "Unknown";
-	/*Here comes the golden information THANK YOU ROCKSTAR GAMES*/
-	model = ENTITY::GET_ENTITY_MODEL(hitEntityHandle);
-	/*NOTE! here the right ,forward,upvector, min and max might need to be translated with respect to LIDAR origin too.*/
-	GAMEPLAY::GET_MODEL_DIMENSIONS(model, &min, &max);
-	//ENTITY::GET_ENTITY_MATRIX(hitEntityHandle, &rightVector, &forwardVector, &upVector, &position); //Blue or red pill
-	forwardVector = ENTITY::GET_ENTITY_FORWARD_VECTOR(hitEntityHandle);
-	rightVector = forwardVector;		/*DEBUG modify after debug*/
-	upVector = forwardVector;			/*DEBUG modify after debug*/
 	
-	/*Get vehicle dimensions*/
-	vehicle_centroid.x = 0.5*(max.x - min.x);
-	vehicle_centroid.y = 0.5*(max.y - min.y);
-	vehicle_centroid.z = 0.5*(max.z - min.z);
-	result.vehicle_position = vehicle_centroid;
 
-	/*Following the convention of length > width*/
-	if ((max.x - min.x) > (max.y - min.y)) { 
-		result.length = max.x - min.x;
-		result.width = max.y - min.y;
-		result.height = max.z - min.z;
-		}
-	else {
-		result.length = max.y - min.y; 
-		result.width = max.x - min.x;
-		result.height = max.z - min.z;
-	}
-	/*Get vehicle bounding box vertices for ground truth*/
-	/*TODO these vertices value might be with respect to the WORLD origin, need to shift the origin to LIDAR origin*/
-	FUR.x = position.x + vehicle_centroid.y*rightVector.x + vehicle_centroid.x*forwardVector.x + vehicle_centroid.z*upVector.x;
-	FUR.y = position.y + vehicle_centroid.y*rightVector.y + vehicle_centroid.x*forwardVector.y + vehicle_centroid.z*upVector.y;
-	FUR.z = position.z + vehicle_centroid.y*rightVector.z + vehicle_centroid.x*forwardVector.z + vehicle_centroid.z*upVector.z;
-	//GAMEPLAY::GET_GROUND_Z_FOR_3D_COORD(FUR.x, FUR.y, 1000.0, &(FUR.z), 0);
-	//FUR.z += 2 * vehicle_centroid.z;
-
-	BLL.x = position.x - vehicle_centroid.y*rightVector.x - vehicle_centroid.x*forwardVector.x - vehicle_centroid.z*upVector.x;
-	BLL.y = position.y - vehicle_centroid.y*rightVector.y - vehicle_centroid.x*forwardVector.y - vehicle_centroid.z*upVector.y;
-	BLL.z = position.z - vehicle_centroid.y*rightVector.z - vehicle_centroid.x*forwardVector.z - vehicle_centroid.z*upVector.z;
-
-	result.vertex1 = BLL;
-	result.vertex5 = FUR;
-	 
-	result.vertex2.x = result.vertex1.x + 2 * vehicle_centroid.y*rightVector.x;
-	result.vertex2.y = result.vertex1.y + 2 * vehicle_centroid.y*rightVector.y;
-	result.vertex2.z = result.vertex1.z + 2 * vehicle_centroid.y*rightVector.z;
-
-	result.vertex3.x = result.vertex2.x + 2 * vehicle_centroid.z*upVector.x;
-	result.vertex3.y = result.vertex2.y + 2 * vehicle_centroid.z*upVector.y;
-	result.vertex3.z = result.vertex2.z + 2 * vehicle_centroid.z*upVector.z;
-
-	result.vertex4.x = result.vertex1.x + 2 * vehicle_centroid.z*upVector.x;
-	result.vertex4.y = result.vertex1.y + 2 * vehicle_centroid.z*upVector.y;
-	result.vertex4.z = result.vertex1.z + 2 * vehicle_centroid.z*upVector.z;
-
-	result.vertex6.x = result.vertex5.x - 2 * vehicle_centroid.y*rightVector.x;
-	result.vertex6.y = result.vertex5.y - 2 * vehicle_centroid.y*rightVector.y;
-	result.vertex6.z = result.vertex5.z - 2 * vehicle_centroid.y*rightVector.z;
-
-	result.vertex7.x = result.vertex6.x - 2 * vehicle_centroid.z*upVector.x;
-	result.vertex7.y = result.vertex6.y - 2 * vehicle_centroid.z*upVector.y;
-	result.vertex7.z = result.vertex6.z - 2 * vehicle_centroid.z*upVector.z;
-
-	result.vertex8.x = result.vertex5.x - 2 * vehicle_centroid.z*upVector.x;
-	result.vertex8.y = result.vertex5.y - 2 * vehicle_centroid.z*upVector.y;
-	result.vertex8.z = result.vertex5.z - 2 * vehicle_centroid.z*upVector.z;
-
-	/*Get point wise label*/
+	
 	if (ENTITY::DOES_ENTITY_EXIST(hitEntityHandle)) {
 		int entityType = ENTITY::GET_ENTITY_TYPE(hitEntityHandle);
-		if (entityType == 1) {entityTypeName = "GTA.Ped";}
-		/*NOTE! Here vehicle means only car modify this if you need all/other vehicles*/
-		else if (entityType == 2 && VEHICLE::IS_THIS_MODEL_A_CAR(model))  {entityTypeName = "GTA.Vehicle";result.class_instance = entityInstance;}
-		else if (entityType == 3) {entityTypeName = "GTA.Prop";}
+		if (entityType == 1) {
+			entityTypeName = "GTA.Ped";
+		}
+		/*Its possible that hit entity might not be a vehicle and then using get model on that entity will throw an error*/
+		else if (entityType == 2) {
+			entityTypeName = "GTA.Vehicle";
+			result.class_instance = entityInstance;
+			model = ENTITY::GET_ENTITY_MODEL(hitEntityHandle);
+			/*NOTE! here the right ,forward,upvector, min and max might need to be translated with respect to LIDAR origin too.*/
+			GAMEPLAY::GET_MODEL_DIMENSIONS(model, &min, &max);
+			ENTITY::GET_ENTITY_MATRIX(hitEntityHandle, &rightVector, &forwardVector, &upVector, &position); //Blue or red pill
+			//forwardVector = ENTITY::GET_ENTITY_FORWARD_VECTOR(hitEntityHandle);
+			//rightVector = forwardVector;		/*DEBUG modify after debug*/
+			//upVector = forwardVector;			/*DEBUG modify after debug*/
+			/*Get vehicle dimensions*/
+			vehicle_centroid.x = 0.5*(max.x - min.x);
+			vehicle_centroid.y = 0.5*(max.y - min.y);
+			vehicle_centroid.z = 0.5*(max.z - min.z);
+			result.vehicle_position = vehicle_centroid;
+			/*Following the convention of length > width*/
+			if ((max.x - min.x) > (max.y - min.y)) {
+				result.length = max.x - min.x;
+				result.width = max.y - min.y;
+				result.height = max.z - min.z;
+			}
+			else {
+				result.length = max.y - min.y;
+				result.width = max.x - min.x;
+				result.height = max.z - min.z;
+			}
+			/*Get vehicle bounding box vertices for ground truth*/
+			/*TODO these vertices value might be with respect to the WORLD origin, need to shift the origin to LIDAR origin*/
+			FUR.x = position.x + vehicle_centroid.y*rightVector.x + vehicle_centroid.x*forwardVector.x + vehicle_centroid.z*upVector.x;
+			FUR.y = position.y + vehicle_centroid.y*rightVector.y + vehicle_centroid.x*forwardVector.y + vehicle_centroid.z*upVector.y;
+			FUR.z = position.z + vehicle_centroid.y*rightVector.z + vehicle_centroid.x*forwardVector.z + vehicle_centroid.z*upVector.z;
+			//GAMEPLAY::GET_GROUND_Z_FOR_3D_COORD(FUR.x, FUR.y, 1000.0, &(FUR.z), 0);
+			//FUR.z += 2 * vehicle_centroid.z;
+
+			BLL.x = position.x - vehicle_centroid.y*rightVector.x - vehicle_centroid.x*forwardVector.x - vehicle_centroid.z*upVector.x;
+			BLL.y = position.y - vehicle_centroid.y*rightVector.y - vehicle_centroid.x*forwardVector.y - vehicle_centroid.z*upVector.y;
+			BLL.z = position.z - vehicle_centroid.y*rightVector.z - vehicle_centroid.x*forwardVector.z - vehicle_centroid.z*upVector.z;
+
+			result.vertex1 = BLL;
+			result.vertex5 = FUR;
+
+			result.vertex2.x = result.vertex1.x + 2 * vehicle_centroid.y*rightVector.x;
+			result.vertex2.y = result.vertex1.y + 2 * vehicle_centroid.y*rightVector.y;
+			result.vertex2.z = result.vertex1.z + 2 * vehicle_centroid.y*rightVector.z;
+
+			result.vertex3.x = result.vertex2.x + 2 * vehicle_centroid.z*upVector.x;
+			result.vertex3.y = result.vertex2.y + 2 * vehicle_centroid.z*upVector.y;
+			result.vertex3.z = result.vertex2.z + 2 * vehicle_centroid.z*upVector.z;
+
+			result.vertex4.x = result.vertex1.x + 2 * vehicle_centroid.z*upVector.x;
+			result.vertex4.y = result.vertex1.y + 2 * vehicle_centroid.z*upVector.y;
+			result.vertex4.z = result.vertex1.z + 2 * vehicle_centroid.z*upVector.z;
+
+			result.vertex6.x = result.vertex5.x - 2 * vehicle_centroid.y*rightVector.x;
+			result.vertex6.y = result.vertex5.y - 2 * vehicle_centroid.y*rightVector.y;
+			result.vertex6.z = result.vertex5.z - 2 * vehicle_centroid.y*rightVector.z;
+
+			result.vertex7.x = result.vertex6.x - 2 * vehicle_centroid.z*upVector.x;
+			result.vertex7.y = result.vertex6.y - 2 * vehicle_centroid.z*upVector.y;
+			result.vertex7.z = result.vertex6.z - 2 * vehicle_centroid.z*upVector.z;
+
+			result.vertex8.x = result.vertex5.x - 2 * vehicle_centroid.z*upVector.x;
+			result.vertex8.y = result.vertex5.y - 2 * vehicle_centroid.z*upVector.y;
+			result.vertex8.z = result.vertex5.z - 2 * vehicle_centroid.z*upVector.z;
+		}
+		else if (entityType == 3) {
+			entityTypeName = "GTA.Prop";
+		}
 	}
 	result.entityTypeName = entityTypeName;
 	return result;
@@ -174,53 +177,48 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 	fileOutput_kitti_labels.open(kitti_label_path);
 	/*Deep GTA 5 params for camera initiation*/
 	/*=======================================*/
-	/*Vehicle vehicle = NULL;
+	Vehicle vehicle = NULL;
 	Player player = NULL;
 	Ped ped = NULL;
 	Cam camera = NULL;
 	Vector3 dir;
 	Vector3 pos, rotation;
-	float heading;*/
+	float heading;
 	
 	/*======================================*/
-	//int classid;
-	///*Host vehicle data*/
-	//Vector3 upVector, rightVector, forwardVector, position; //Vehicle position
-	//Hash vehicleHash = 0x50732C82;
-	//Vector3 speedVector;
+	int classid;
+	/*Host vehicle data*/
+	Vector3 upVector, rightVector, forwardVector, position; //Vehicle position
+	Hash vehicleHash = 0x50732C82;
+	Vector3 speedVector;
 	
 	/*=======================================*/
 	
-	//while (!ENTITY::DOES_ENTITY_EXIST(vehicle)) {
-	//	vehicle = VEHICLE::CREATE_VEHICLE(vehicleHash, pos.x, pos.y, pos.z, heading, FALSE, FALSE);
-	//	WAIT(0);
-	//}
-	//VEHICLE::SET_VEHICLE_ON_GROUND_PROPERLY(vehicle);
-	// 
-
-	//while (!ENTITY::DOES_ENTITY_EXIST(ped)) {
-	//	ped = PLAYER::PLAYER_PED_ID();
-	//	WAIT(0);
-	//}
+	while (!ENTITY::DOES_ENTITY_EXIST(ped)) {
+		ped = PLAYER::PLAYER_PED_ID();
+		WAIT(0);
+	}
 	//ENTITY::GET_ENTITY_MATRIX(ped, &rightVector, &forwardVector, &upVector, &position);
 
-	//player = PLAYER::PLAYER_ID();
-	//PLAYER::START_PLAYER_TELEPORT(player, pos.x, pos.y, pos.z, heading, 0, 0, 0);
-
+	player = PLAYER::PLAYER_ID();
+	if (PED::IS_PED_SITTING_IN_ANY_VEHICLE(ped)) {
+		vehicle = PED::GET_VEHICLE_PED_IS_USING(ped);
+		rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 1);
+		CAM::DESTROY_ALL_CAMS(TRUE);
+		camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
+		/*if (strcmp(_vehicle, "packer") == 0) CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0, 2.35, 1.7, TRUE);
+		else*/
+		CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
+		CAM::SET_CAM_FOV(camera, 60);
+		CAM::SET_CAM_ACTIVE(camera, TRUE);
+		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);
+		CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
+		CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
+	}
 	//PED::SET_PED_INTO_VEHICLE(ped, vehicle, -1);
-	////STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(vehicleHash);
+	//STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(vehicleHash);
 
-	//rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 1);
-	//CAM::DESTROY_ALL_CAMS(TRUE);
-	//camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
-	///*if (strcmp(_vehicle, "packer") == 0) CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0, 2.35, 1.7, TRUE);
-	//else*/ 
-	//CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
-	//CAM::SET_CAM_FOV(camera, 60);
-	//CAM::SET_CAM_ACTIVE(camera, TRUE);
-	//CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);
-	//CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
-	//CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
+	
 
 	for (double z = horiFovMin; z < horiFovMax; z += horiStep)
 	{
