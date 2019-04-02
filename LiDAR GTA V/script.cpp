@@ -95,6 +95,64 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 	std::ofstream fileOutput_label_data;
 	fileOutput.open(filePath);
 	fileOutput_label_data.open(filePath_label);
+	/*Deep GTA 5 params for camera initiation*/
+	/*=======================================*/
+	Vehicle vehicle = NULL;
+	Player player = NULL;
+	Ped ped = NULL;
+	Cam camera = NULL;
+	Vector3 dir;
+	Vector3 pos, rotation;
+	Hash vehicleHash = 0x50732C82;
+	float heading;
+	
+	/*======================================*/
+	/*Vehicle bounding box data*/
+
+	Vector3 FUR; //Front Upper Right
+	Vector3 BLL; //Back Lower Lelft
+	Vector3 dim; //Vehicle dimensions
+	int classid;
+	/*Host vehicle data*/
+	Vector3 upVector, rightVector, forwardVector, position; //Vehicle position
+	Hash model;
+	Vector3 min;
+	Vector3 max;
+	Vector3 speedVector;
+	
+	/*=======================================*/
+	
+	while (!ENTITY::DOES_ENTITY_EXIST(vehicle)) {
+		vehicle = VEHICLE::CREATE_VEHICLE(vehicleHash, pos.x, pos.y, pos.z, heading, FALSE, FALSE);
+		WAIT(0);
+	}
+	VEHICLE::SET_VEHICLE_ON_GROUND_PROPERLY(vehicle);
+	 
+
+	while (!ENTITY::DOES_ENTITY_EXIST(ped)) {
+		ped = PLAYER::PLAYER_PED_ID();
+		WAIT(0);
+	}
+	ENTITY::GET_ENTITY_MATRIX(ped, &rightVector, &forwardVector, &upVector, &position);
+
+	player = PLAYER::PLAYER_ID();
+	PLAYER::START_PLAYER_TELEPORT(player, pos.x, pos.y, pos.z, heading, 0, 0, 0);
+
+	PED::SET_PED_INTO_VEHICLE(ped, vehicle, -1);
+	//STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(vehicleHash);
+
+	rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 1);
+	//CAM::DESTROY_ALL_CAMS(TRUE);
+	//camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
+	///*if (strcmp(_vehicle, "packer") == 0) CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0, 2.35, 1.7, TRUE);
+	//else*/ 
+	//CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
+	//CAM::SET_CAM_FOV(camera, 60);
+	//CAM::SET_CAM_ACTIVE(camera, TRUE);
+	//CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);
+	//CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
+	//CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
+	
 	//fileOutput << "ply\nformat ascii 1.0\nelement vertex " + std::to_string((int)vertexCount) + "\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue\nend_header\n";
 	for (double z = horiFovMin; z < horiFovMax; z += horiStep)
 	{
@@ -129,6 +187,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			result.hitCoordinates.x = result.hitCoordinates.x - origin.x;
 			result.hitCoordinates.y = result.hitCoordinates.y - origin.y;
 			result.hitCoordinates.z = result.hitCoordinates.z - origin.z;
+			// TODO Change the x axis to be aligned with forward vector and +y axis to be left of vehicle. 
 			vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(0) + "\n";	//place holder values for reflectance
 			label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(result.class_instance) + "\n";		//placeholder value for instance values		
 		}
