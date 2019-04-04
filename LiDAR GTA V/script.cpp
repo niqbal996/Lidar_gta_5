@@ -34,6 +34,12 @@ struct ray {
 	Vector3 vehicle_position;
 };
 
+Vector3 subtract_vectors(Vector3 vec1, Vector3 vec2) {
+	vec1.x = vec1.x - vec2.x;
+	vec1.y = vec1.y - vec2.y;
+	vec1.z = vec1.z - vec2.z;
+	return vec1;
+}
 ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectFlags) {
 	ray result;
 	float targetX = source.x + (direction.x * maxDistance);
@@ -150,7 +156,7 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	return result;
 }
 
-ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range) {
+ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range, Vector3 source) {
 	Vector3 rot = CAM::GET_GAMEPLAY_CAM_ROT(2);
 	double rotationX = (rot.x + angleOffsetX) * (M_PI / 180.0);
 	double rotationZ = (rot.z + angleOffsetZ) * (M_PI / 180.0);
@@ -168,7 +174,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 	GAMEPLAY::SET_GAME_PAUSED(true);
 	TIME::PAUSE_CLOCK(true);
 	double vertexCount = (horiFovMax - horiFovMin) * (1 / horiStep) * (vertFovMax - vertFovMin) * (1 / vertStep);
-	Vector3 origin = CAM::GET_GAMEPLAY_CAM_COORD();
+	Vector3 origin;
 	std::ofstream fileOutput;
 	std::ofstream fileOutput_label_data;
 	std::ofstream fileOutput_kitti_labels;
@@ -178,6 +184,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 	/*Deep GTA 5 params for camera initiation*/
 	/*=======================================*/
 	Vehicle vehicle = NULL;
+	Vector3 source;
 	Player player = NULL;
 	Ped ped = NULL;
 	Cam camera = NULL;
@@ -204,14 +211,23 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 	if (PED::IS_PED_SITTING_IN_ANY_VEHICLE(ped)) {
 		vehicle = PED::GET_VEHICLE_PED_IS_USING(ped);
 		rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 1);
-		CAM::DESTROY_ALL_CAMS(TRUE);
-		camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
+		ENTITY::GET_ENTITY_MATRIX(vehicle, &rightVector, &forwardVector, &upVector, &position);
 		/*if (strcmp(_vehicle, "packer") == 0) CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0, 2.35, 1.7, TRUE);
 		else*/
+		/*Use vehicle position as LiDAR source.*/
+		/* Here position should correspond to center of the vehicle.*/
+		source.x = position.x + 0.2;
+		source.y = position.y + 0.5;
+		source.z = position.z + 1.5;
+		origin = CAM::GET_GAMEPLAY_CAM_COORD();			//IS this same as position of the vehicle or how much offset there is? 
+		
+		CAM::DESTROY_ALL_CAMS(TRUE);
+		camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
 		CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
 		CAM::SET_CAM_FOV(camera, 60);
 		CAM::SET_CAM_ACTIVE(camera, TRUE);
-		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);
+		WAIT(10);
+		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
 		CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
 		CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
 	}
@@ -230,7 +246,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			std::string entityName3 = "None";
 			int entityHash = 0;
 			unsigned char r = 0; unsigned char g = 0; unsigned char b = 0;
-			ray result = angleOffsetRaycast(x, z, range);
+			ray result = angleOffsetRaycast(x, z, range,source);
 			if (result.hit)
 			{
 				r = 255; g = 255; b = 255;
@@ -251,20 +267,47 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 					r = 0; g = 0; b = 255;
 				}
 			}
-			/*result.hitCoordinates.x = result.hitCoordinates.x - origin.x;
+			result.hitCoordinates.x = result.hitCoordinates.x - origin.x;
 			result.hitCoordinates.y = result.hitCoordinates.y - origin.y;
-			result.hitCoordinates.z = result.hitCoordinates.z - origin.z;*/
+			result.hitCoordinates.z = result.hitCoordinates.z - origin.z;
+			result.vertex1.x = result.vertex1.x - origin.x;
+			result.vertex2.x = result.vertex2.x - origin.x;
+			result.vertex3.x = result.vertex3.x - origin.x;
+			result.vertex4.x = result.vertex4.x - origin.x;
+			result.vertex5.x = result.vertex5.x - origin.x;
+			result.vertex6.x = result.vertex6.x - origin.x;
+			result.vertex7.x = result.vertex7.x - origin.x;
+			result.vertex8.x = result.vertex8.x - origin.x;
+			result.vertex1.y = result.vertex1.y - origin.y;
+			result.vertex2.y = result.vertex2.y - origin.y;
+			result.vertex3.y = result.vertex3.y - origin.y;
+			result.vertex4.y = result.vertex4.y - origin.y;
+			result.vertex5.y = result.vertex5.y - origin.y;
+			result.vertex6.y = result.vertex6.y - origin.y;
+			result.vertex7.y = result.vertex7.y - origin.y;
+			result.vertex8.y = result.vertex8.y - origin.y;
+			result.vertex1.z = result.vertex1.z - origin.z;
+			result.vertex2.z = result.vertex2.z - origin.z;
+			result.vertex3.z = result.vertex3.z - origin.z;
+			result.vertex4.z = result.vertex4.z - origin.z;
+			result.vertex5.z = result.vertex5.z - origin.z;
+			result.vertex6.z = result.vertex6.z - origin.z;
+			result.vertex7.z = result.vertex7.z - origin.z;
+			result.vertex8.z = result.vertex8.z - origin.z;
 			// TODO Change the x axis to be aligned with forward vector and +y axis to be left of vehicle. 
-			vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(0) + "\n";	//place holder values for reflectance
-			label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(result.class_instance) +  "\n";		//placeholder value for instance values	
-			kitti_label += std::to_string(result.vertex1.x) + " " + std::to_string(result.vertex1.y) + " " + std::to_string(result.vertex1.z) + " " +
-				std::to_string(result.vertex2.x) + " " + std::to_string(result.vertex2.y) + " " + std::to_string(result.vertex2.z) + " " +
-				std::to_string(result.vertex3.x) + " " + std::to_string(result.vertex3.y) + " " + std::to_string(result.vertex3.z) + " " +
-				std::to_string(result.vertex4.x) + " " + std::to_string(result.vertex4.y) + " " + std::to_string(result.vertex4.z) + " " +
-				std::to_string(result.vertex5.x) + " " + std::to_string(result.vertex5.y) + " " + std::to_string(result.vertex5.z) + " " +
-				std::to_string(result.vertex6.x) + " " + std::to_string(result.vertex6.y) + " " + std::to_string(result.vertex6.z) + " " +
-				std::to_string(result.vertex7.x) + " " + std::to_string(result.vertex7.y) + " " + std::to_string(result.vertex7.z) + " " +
-				std::to_string(result.vertex8.x) + " " + std::to_string(result.vertex8.y) + " " + std::to_string(result.vertex8.z) + "\n";
+			if (result.hitCoordinates.x > 120.0f) continue;					//TODO add conditions for other axes as well ??  lets see
+			else {
+				vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(0) + "\n";	//place holder values for reflectance
+				label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(result.class_instance) + "\n";		//placeholder value for instance values	
+				kitti_label += std::to_string(result.vertex1.x) + " " + std::to_string(result.vertex1.y) + " " + std::to_string(result.vertex1.z) + " " +
+					std::to_string(result.vertex2.x) + " " + std::to_string(result.vertex2.y) + " " + std::to_string(result.vertex2.z) + " " +
+					std::to_string(result.vertex3.x) + " " + std::to_string(result.vertex3.y) + " " + std::to_string(result.vertex3.z) + " " +
+					std::to_string(result.vertex4.x) + " " + std::to_string(result.vertex4.y) + " " + std::to_string(result.vertex4.z) + " " +
+					std::to_string(result.vertex5.x) + " " + std::to_string(result.vertex5.y) + " " + std::to_string(result.vertex5.z) + " " +
+					std::to_string(result.vertex6.x) + " " + std::to_string(result.vertex6.y) + " " + std::to_string(result.vertex6.z) + " " +
+					std::to_string(result.vertex7.x) + " " + std::to_string(result.vertex7.y) + " " + std::to_string(result.vertex7.z) + " " +
+					std::to_string(result.vertex8.x) + " " + std::to_string(result.vertex8.y) + " " + std::to_string(result.vertex8.z) + "\n";
+			}
 		}
 		fileOutput << vertexData;
 		fileOutput_label_data << label_Data;
@@ -313,7 +356,7 @@ void ScriptMain()
 				inputFile.close();
 			}
 		elapsed_time = GetTickCount() - start_time;
-		if (elapsed_time > 30000)				/*in milli seconds. if more than 30 milliseconds take a lidar screen shot*/
+		if (elapsed_time > 40000)				/*in milli seconds. if more than 30 milliseconds take a lidar screen shot*/
 		{
 			start_time = GetTickCount();
 			lidar(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], range,
