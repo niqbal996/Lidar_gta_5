@@ -32,6 +32,7 @@ struct ray {
 	Vector3 vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7, vertex8;
 	float length, width, height;
 	Vector3 vehicle_position;
+	bool occlusion;
 };
 
 Vector3 subtract_vectors(Vector3 vec1, Vector3 vec2) {
@@ -90,6 +91,7 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 			/*NOTE! here the right ,forward,upvector, min and max might need to be translated with respect to LIDAR origin too.*/
 			GAMEPLAY::GET_MODEL_DIMENSIONS(model, &min, &max);
 			ENTITY::GET_ENTITY_MATRIX(hitEntityHandle, &rightVector, &forwardVector, &upVector, &position); //Blue or red pill
+			result.occlusion = ENTITY::IS_ENTITY_OCCLUDED(hitEntityHandle);
 			//forwardVector = ENTITY::GET_ENTITY_FORWARD_VECTOR(hitEntityHandle);
 			//rightVector = forwardVector;		/*DEBUG modify after debug*/
 			//upVector = forwardVector;			/*DEBUG modify after debug*/
@@ -297,16 +299,17 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			// TODO Change the x axis to be aligned with forward vector and +y axis to be left of vehicle. 
 			if (result.hitCoordinates.x > 120.0f) continue;					//TODO add conditions for other axes as well ??  lets see
 			else {
-				vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(0) + "\n";	//place holder values for reflectance
+				vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(1.0f) + "\n";	//place holder values for intensity
 				label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(result.class_instance) + "\n";		//placeholder value for instance values	
-				kitti_label += std::to_string(result.vertex1.x) + " " + std::to_string(result.vertex1.y) + " " + std::to_string(result.vertex1.z) + " " +
+				/*kitti_label += std::to_string(result.vertex1.x) + " " + std::to_string(result.vertex1.y) + " " + std::to_string(result.vertex1.z) + " " +
 					std::to_string(result.vertex2.x) + " " + std::to_string(result.vertex2.y) + " " + std::to_string(result.vertex2.z) + " " +
 					std::to_string(result.vertex3.x) + " " + std::to_string(result.vertex3.y) + " " + std::to_string(result.vertex3.z) + " " +
 					std::to_string(result.vertex4.x) + " " + std::to_string(result.vertex4.y) + " " + std::to_string(result.vertex4.z) + " " +
 					std::to_string(result.vertex5.x) + " " + std::to_string(result.vertex5.y) + " " + std::to_string(result.vertex5.z) + " " +
 					std::to_string(result.vertex6.x) + " " + std::to_string(result.vertex6.y) + " " + std::to_string(result.vertex6.z) + " " +
 					std::to_string(result.vertex7.x) + " " + std::to_string(result.vertex7.y) + " " + std::to_string(result.vertex7.z) + " " +
-					std::to_string(result.vertex8.x) + " " + std::to_string(result.vertex8.y) + " " + std::to_string(result.vertex8.z) + "\n";
+					std::to_string(result.vertex8.x) + " " + std::to_string(result.vertex8.y) + " " + std::to_string(result.vertex8.z) + "\n";*/
+				kitti_label += "Car 0 " + std::to_string(result.occlusion) + " " + std::to_string(0) /*dummy alpha value*/ + " " + std::to_string(result.height) + " " + std::to_string(result.width) + " " + std::to_string(result.length)+ "\n";
 			}
 		}
 		fileOutput << vertexData;
