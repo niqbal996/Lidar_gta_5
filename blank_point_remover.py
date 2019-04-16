@@ -47,20 +47,35 @@ if(path.exists(point_cloud_dir) and path.exists(ground_truth_dir) and path.exist
                     points_counter += 1
                     continue
                 else:
-                    #x =list(map(float, line.split(" ")))[0:4]
+                    x =list(map(float, line.split(" ")))[0:4]
                     point_cloud_array.append(list(map(float, line.split(" ")))[0:4])
 
             print("[INFO] " , str(points_counter), " number of points have been removed.")
             points_counter = 0 #reset
-            point_cloud_array = np.asarray(point_cloud_array)
+            point_cloud_array = np.asarray(point_cloud_array,dtype='float32')
             #Same naming convention as KITTI
             filename = '{:06d}.bin'.format(file_number)                 #e.g. 000001.bin
             filename = os.path.join(output_point_cloud_dir,filename)
             fileObject = open(filename, 'wb')
             #Vectorize the array before saving into binary file since the KITTI data is also vectorize.
-            pickle.dump(point_cloud_array, fileObject)
+            # fig2 = pyplot.figure()
+            # # blue_points_array = np.where(instances == 0)  # all blue
+            # # red_points_array = np.where(instances != 0)  # all reds
+            # # pyplot.scatter(point_cloud_array[red_points_array, 0],
+            # #                point_cloud_array[red_points_array, 1], s=0.01, marker=".", c='r')
+            # # pyplot.scatter(point_cloud_array[blue_points_array, 0],
+            # #                point_cloud_array[blue_points_array, 1], s=0.01, marker=".", c='b')
+            # pyplot.scatter(point_cloud_array[:, 0], point_cloud_array[:, 1], s=0.01, marker='.')
+            # pyplot.xlabel("X axis")
+            # pyplot.ylabel('Y axis')
+            # pyplot.show()
+            point_cloud_array = np.reshape(point_cloud_array, (1 , (np.shape(point_cloud_array)[0] * np.shape(point_cloud_array)[1])))
+            number_of_points = int(point_cloud_array.shape[1] / 4)
+            # Transform (1,number_of_points) dimensional 2D array into (number_of_points,) 1D array
+            point_cloud_array = point_cloud_array.flatten()
+            #Use to file to save into a bin file instead of pickle.dump
+            point_cloud_array.tofile(fileObject)
             fileObject.close()
-
 
             #Process the ground truth data now
             for line in open(current_ground_truth_file, 'r').readlines():
@@ -74,7 +89,7 @@ if(path.exists(point_cloud_dir) and path.exists(ground_truth_dir) and path.exist
 
             print("[INFO] " , str(points_counter), " number of points have been removed from ground truth file.")
             ground_truth_array = np.asarray(ground_truth_array)
-            assert(len(ground_truth_array) == len(point_cloud_array))
+            #assert(len(ground_truth_array) == len(point_cloud_array))
             instances = ground_truth_array[:, 3]
             unique_instances = np.unique(instances)
             unique_instances = unique_instances[1:,] #ignore 0 because its not needed. len(unique_instances) = number of cars in the current snapshot
@@ -91,30 +106,44 @@ if(path.exists(point_cloud_dir) and path.exists(ground_truth_dir) and path.exist
             pickle.dump(ground_truth_array, fileObject)
             fileObject.close()
 
-            #Process the KITTI ground truth data now
+            # Vectorize the array before saving into binary file since the KITTI data is also vectori
             lines = open(current_ground_truth_kitti_file, 'r').readlines()
             for line in open(current_ground_truth_kitti_file, 'r').readlines():
-                ground_truth_kitti_array.append(list(map(float, line.split(" "))))
+                current_entry = list(map(str, line.split(" ")))
+                float_list = np.abs(np.array(current_entry[1:],dtype=float))
+                condition = (any((float_list) > 120.0)) ==True
+                if(float(current_entry[2]) > 1):              #Must be 0 or 1. anything greater than that, discard it.
+                    continue
+                elif((any((float_list) > 120.0)) ==True):
+                    continue
+                else:
+                    ground_truth_kitti_array.append(current_entry)
             # Same naming convention as KITTI
             ground_truth_kitti_array = np.asarray(ground_truth_kitti_array)
-            ground_truth_kitti_array = ground_truth_kitti_array[first_occurence,:]
-            filename = '{:06d}.txt'.format(file_number)  # e.g. 000001.txt
+            #whoa = np.where(ground_truth_kitti_array[:,11]==np.unique(ground_truth_kitti_array[:,11]))
+            unique_examples = []
+            for entry in range(len(np.unique(ground_truth_kitti_array[:,11]))):
+                x = np.where(ground_truth_kitti_array[:,11] == np.unique(ground_truth_kitti_array[:,11])[entry] )
+                unique_examples.append(x[0][1])  #need only one entry of this unique example
+            ground_truth_kitti_array = ground_truth_kitti_array[unique_examples,:]
+            filename = '{:06d}.txt'.format(file_number)  # e.g. 000001.bin
             filename = os.path.join(output_ground_truth_kitti_dir, filename)
-            fileObject = open(filename, 'wb')
-            # Vectorize the array before saving into binary file since the KITTI data is also vectorize.
-            pickle.dump(ground_truth_array, fileObject)
-            fileObject.close()
+            with open(filename,'w') as f:
+                for item in ground_truth_kitti_array:
+                    for entry in item:
+                        f.write('%s ' % entry)      #TODO this creates a blank space before each line. Causes error with labels
 
-            fig2 = pyplot.figure()
-            blue_points_array = np.where(instances == 0)    #all blue
-            red_points_array = np.where(instances != 0)     #all reds
-            pyplot.scatter(point_cloud_array[red_points_array, 0],
-                           point_cloud_array[red_points_array, 1], s=0.01, marker=".",c='r')
-            pyplot.scatter(point_cloud_array[blue_points_array, 0],
-                           point_cloud_array[blue_points_array, 1], s=0.01, marker=".", c='b')
-            pyplot.xlabel("X axis")
-            pyplot.ylabel('Y axis')
-            pyplot.show()
+            # Vectorize the array before saving into binary file since the KITTI data is also vectorize
+            # fig2 = pyplot.figure()
+            # blue_points_array = np.where(instances == 0)    #all blue
+            # red_points_array = np.where(instances != 0)     #all reds
+            # pyplot.scatter(point_cloud_array[red_points_array, 0],
+            #                point_cloud_array[red_points_array, 1], s=0.01, marker=".",c='r')
+            # pyplot.scatter(point_cloud_array[blue_points_array, 0],
+            #                point_cloud_array[blue_points_array, 1], s=0.01, marker=".", c='b')
+            # pyplot.xlabel("X axis")
+            # pyplot.ylabel('Y axis')
+            # pyplot.show()
             # fig = pyplot.figure()
             # ax = Axes3D(fig)
             # blue_points_array = np.where(instances == 0)    #all blue
@@ -136,31 +165,31 @@ if(path.exists(point_cloud_dir) and path.exists(ground_truth_dir) and path.exist
             # pyplot.scatter(point_cloud_array[:, 0], point_cloud_array[:, 1], s=0.01, marker=".")
             # pyplot.xlabel("X axis")
             # pyplot.ylabel('Y axis')
-            # assert(len(unique_instances) == ground_truth_kitti_array.shape[0])
-            # # for rectangle in range(len(unique_instances)):
-            # #       pyplot.arrow(ground_truth_kitti_array[rectangle, 0],   #x1              #vertex 1 and 2
-            # #               ground_truth_kitti_array[rectangle,  1],  #y1
-            # #               ground_truth_kitti_array[rectangle,  3],  #x2
-            # #               ground_truth_kitti_array[rectangle,  4])  #y2
-            # #       pyplot.arrow(ground_truth_kitti_array[rectangle, 0],  # x1              #vertex 1 and 7
-            # #               ground_truth_kitti_array[rectangle,  1],  # y1
-            # #               ground_truth_kitti_array[rectangle,   18],  # x2
-            # #               ground_truth_kitti_array[rectangle,   19])  # y2
-            # #       pyplot.arrow(ground_truth_kitti_array[rectangle,   21],  # x1              #vertex 8 and 7
-            # #               ground_truth_kitti_array[rectangle,   22],  # y1
-            # #               ground_truth_kitti_array[rectangle,   18],  # x2
-            # #               ground_truth_kitti_array[rectangle,   19])  # y2
-            # #       pyplot.arrow(ground_truth_kitti_array[rectangle,   3],  # x1              #vertex 2 and 8
-            # #               ground_truth_kitti_array[rectangle,   4],  # y1
-            # #               ground_truth_kitti_array[rectangle,   21],  # x2
-            # #               ground_truth_kitti_array[rectangle,   22])  # y2
+            # #assert(len(unique_instances) == ground_truth_kitti_array.shape[0])
+            # for rectangle in range(len(unique_instances)):
+            #       pyplot.arrow(ground_truth_kitti_array[rectangle, 0],   #x1              #vertex 1 and 2
+            #               ground_truth_kitti_array[rectangle,  1],  #y1
+            #               ground_truth_kitti_array[rectangle,  3],  #x2
+            #               ground_truth_kitti_array[rectangle,  4])  #y2
+            #       pyplot.arrow(ground_truth_kitti_array[rectangle, 0],  # x1              #vertex 1 and 7
+            #               ground_truth_kitti_array[rectangle,  1],  # y1
+            #               ground_truth_kitti_array[rectangle,   18],  # x2
+            #               ground_truth_kitti_array[rectangle,   19])  # y2
+            #       pyplot.arrow(ground_truth_kitti_array[rectangle,   21],  # x1              #vertex 8 and 7
+            #               ground_truth_kitti_array[rectangle,   22],  # y1
+            #               ground_truth_kitti_array[rectangle,   18],  # x2
+            #               ground_truth_kitti_array[rectangle,   19])  # y2
+            #       pyplot.arrow(ground_truth_kitti_array[rectangle,   3],  # x1              #vertex 2 and 8
+            #               ground_truth_kitti_array[rectangle,   4],  # y1
+            #               ground_truth_kitti_array[rectangle,   21],  # x2
+            #               ground_truth_kitti_array[rectangle,   22])  # y2
             # pyplot.show()
 
             # TODO get the bounding box values from instance values in ground truth files.
             print("[INFO] ", str(round(file_number / len(point_cloud_files) * 100.0)), " percent of the files have been processed. . .")
 
-    print (points_counter , " number of points have been removed")
-    print("[INFO]JOB DONE ! ! ! ")
+    print ("[INFO] Total " , points_counter , " number of points have been removed")
+    print("[INFO] JOB DONE ! ! ! ")
 
 
 
