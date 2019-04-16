@@ -8,14 +8,16 @@ import pickle
 
 data_set_path = "D:\\Applications\\steamapps\\common\\Grand Theft Auto V\\LiDAR GTA V"
 
+#Preprocessed DATA OUTPUT DIRECTORY
 output_directory = "synthetic\\"
 output_point_cloud_dir = os.path.join(output_directory, "velodyne")
 output_ground_truth_dir = os.path.join(output_directory, "labels")
-output_ground_truth_kitti_dir = os.path.join(output_directory, "kitti_labels")
+output_ground_truth_kitti_dir = os.path.join(output_directory, "label_2")
 os.makedirs(output_point_cloud_dir, exist_ok=True)
 os.makedirs(output_ground_truth_dir, exist_ok=True)
 os.makedirs(output_ground_truth_kitti_dir, exist_ok=True)
 
+#Source directory
 point_cloud_dir = os.path.join(data_set_path, "velodyne")
 ground_truth_dir = os.path.join(data_set_path, "labels")
 ground_truth_kitti_dir = os.path.join(data_set_path, "kitti_labels")
@@ -131,7 +133,10 @@ if(path.exists(point_cloud_dir) and path.exists(ground_truth_dir) and path.exist
             with open(filename,'w') as f:
                 for item in ground_truth_kitti_array:
                     for entry in item:
-                        f.write('%s ' % entry)      #TODO this creates a blank space before each line. Causes error with labels
+                        if "\n" in entry:
+                            f.write('%s' % entry)  # TODO this creates a blank space before each line. Causes error with labels
+                        else:
+                            f.write('%s ' % entry)
 
             # Vectorize the array before saving into binary file since the KITTI data is also vectorize
             # fig2 = pyplot.figure()
@@ -190,9 +195,6 @@ if(path.exists(point_cloud_dir) and path.exists(ground_truth_dir) and path.exist
 
     print ("[INFO] Total " , points_counter , " number of points have been removed")
     print("[INFO] JOB DONE ! ! ! ")
-
-
-
 
 # number_of_points = int(cloud.shape[0] / 4)
 #
