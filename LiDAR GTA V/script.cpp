@@ -99,7 +99,8 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 			vehicle_centroid.x = 0.5*(max.x - min.x);
 			vehicle_centroid.y = 0.5*(max.y - min.y);
 			vehicle_centroid.z = 0.5*(max.z - min.z);
-			result.vehicle_position = vehicle_centroid;
+			result.vehicle_position = position;
+			//result.vehicle_position = vehicle_centroid;
 			/*Following the convention of length > width*/
 			if ((max.x - min.x) > (max.y - min.y)) {
 				result.length = max.x - min.x;
@@ -274,30 +275,30 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			result.hitCoordinates.x = result.hitCoordinates.x - origin.x;
 			result.hitCoordinates.y = result.hitCoordinates.y - origin.y;
 			result.hitCoordinates.z = result.hitCoordinates.z - origin.z;
-			result.vertex1.x = result.vertex1.x - origin.x;
-			result.vertex2.x = result.vertex2.x - origin.x;
-			result.vertex3.x = result.vertex3.x - origin.x;
-			result.vertex4.x = result.vertex4.x - origin.x;
-			result.vertex5.x = result.vertex5.x - origin.x;
-			result.vertex6.x = result.vertex6.x - origin.x;
-			result.vertex7.x = result.vertex7.x - origin.x;
-			result.vertex8.x = result.vertex8.x - origin.x;
-			result.vertex1.y = result.vertex1.y - origin.y;
-			result.vertex2.y = result.vertex2.y - origin.y;
-			result.vertex3.y = result.vertex3.y - origin.y;
-			result.vertex4.y = result.vertex4.y - origin.y;
-			result.vertex5.y = result.vertex5.y - origin.y;
-			result.vertex6.y = result.vertex6.y - origin.y;
-			result.vertex7.y = result.vertex7.y - origin.y;
-			result.vertex8.y = result.vertex8.y - origin.y;
-			result.vertex1.z = result.vertex1.z - origin.z;
-			result.vertex2.z = result.vertex2.z - origin.z;
-			result.vertex3.z = result.vertex3.z - origin.z;
-			result.vertex4.z = result.vertex4.z - origin.z;
-			result.vertex5.z = result.vertex5.z - origin.z;
-			result.vertex6.z = result.vertex6.z - origin.z;
-			result.vertex7.z = result.vertex7.z - origin.z;
-			result.vertex8.z = result.vertex8.z - origin.z;
+			//result.vertex1.x = result.vertex1.x - origin.x;
+			//result.vertex2.x = result.vertex2.x - origin.x;
+			//result.vertex3.x = result.vertex3.x - origin.x;
+			//result.vertex4.x = result.vertex4.x - origin.x;
+			//result.vertex5.x = result.vertex5.x - origin.x;
+			//result.vertex6.x = result.vertex6.x - origin.x;
+			//result.vertex7.x = result.vertex7.x - origin.x;
+			//result.vertex8.x = result.vertex8.x - origin.x;
+			//result.vertex1.y = result.vertex1.y - origin.y;
+			//result.vertex2.y = result.vertex2.y - origin.y;
+			//result.vertex3.y = result.vertex3.y - origin.y;
+			//result.vertex4.y = result.vertex4.y - origin.y;
+			//result.vertex5.y = result.vertex5.y - origin.y;
+			//result.vertex6.y = result.vertex6.y - origin.y;
+			//result.vertex7.y = result.vertex7.y - origin.y;
+			//result.vertex8.y = result.vertex8.y - origin.y;
+			//result.vertex1.z = result.vertex1.z - origin.z;
+			//result.vertex2.z = result.vertex2.z - origin.z;
+			//result.vertex3.z = result.vertex3.z - origin.z;
+			//result.vertex4.z = result.vertex4.z - origin.z;
+			//result.vertex5.z = result.vertex5.z - origin.z;
+			//result.vertex6.z = result.vertex6.z - origin.z;
+			//result.vertex7.z = result.vertex7.z - origin.z;
+			//result.vertex8.z = result.vertex8.z - origin.z;
 			// TODO Change the x axis to be aligned with forward vector and +y axis to be left of vehicle. 
 			if (result.hitCoordinates.x > 120.0f) continue;					//TODO add conditions for other axes as well ??  lets see
 			else {
@@ -312,10 +313,10 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 					std::to_string(result.vertex7.x) + " " + std::to_string(result.vertex7.y) + " " + std::to_string(result.vertex7.z) + " " +
 					std::to_string(result.vertex8.x) + " " + std::to_string(result.vertex8.y) + " " + std::to_string(result.vertex8.z) + "\n";*/
 				kitti_label += "Car 0 " + std::to_string(result.occlusion) + " " + std::to_string(0.0f) /*dummy alpha value*/ + " " +
-					std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + /*2D bounding box coordinates*/
+					std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + std::to_string(1.0f) + " " + std::to_string(1.0f) + " " + /*2D bounding box coordinates*/
 					std::to_string(result.height) + " " + std::to_string(result.width) + " " + std::to_string(result.length)+  " " + 
-					std::to_string(result.vehicle_position.x) + " " + std::to_string(result.vehicle_position.y) + " " + std::to_string(result.vehicle_position.z) + 
-					std::to_string(0.0f) + " " + std::to_string(0) + "\n";
+					std::to_string(result.vehicle_position.x) + " " + std::to_string(result.vehicle_position.y) + " " + std::to_string(result.vehicle_position.z) + " " +
+					std::to_string(1.0f) + " " + std::to_string(0.0) + "\n";
 			}
 		}
 		fileOutput << vertexData;
