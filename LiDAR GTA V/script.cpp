@@ -218,10 +218,10 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 		else*/
 		/*Use vehicle position as LiDAR source.*/
 		/* Here position should correspond to center of the vehicle.*/
-		source.x = position.x + 0.2;
-		source.y = position.y + 0.5;
-		source.z = position.z + 1.5;
-		origin = CAM::GET_GAMEPLAY_CAM_COORD();			//IS this same as position of the vehicle or how much offset there is? 
+		/*source.x = position.x;
+		source.y = position.y;
+		source.z = position.z;
+		*/
 		
 		CAM::DESTROY_ALL_CAMS(TRUE);
 		camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
@@ -232,6 +232,8 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
 		CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
 		CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
+		origin = CAM::GET_GAMEPLAY_CAM_COORD();			//IS this same as position of the vehicle or how much offset there is? 
+		source = CAM::GET_GAMEPLAY_CAM_COORD();
 	}
 	//PED::SET_PED_INTO_VEHICLE(ped, vehicle, -1);
 	//STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(vehicleHash);
@@ -300,7 +302,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			if (result.hitCoordinates.x > 120.0f) continue;					//TODO add conditions for other axes as well ??  lets see
 			else {
 				vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(1.0f) + "\n";	//place holder values for intensity
-				label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(result.class_instance) + "\n";		//placeholder value for instance values	
+				//label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(result.class_instance) + "\n";		//placeholder value for instance values	
 				/*kitti_label += std::to_string(result.vertex1.x) + " " + std::to_string(result.vertex1.y) + " " + std::to_string(result.vertex1.z) + " " +
 					std::to_string(result.vertex2.x) + " " + std::to_string(result.vertex2.y) + " " + std::to_string(result.vertex2.z) + " " +
 					std::to_string(result.vertex3.x) + " " + std::to_string(result.vertex3.y) + " " + std::to_string(result.vertex3.z) + " " +
@@ -309,11 +311,15 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 					std::to_string(result.vertex6.x) + " " + std::to_string(result.vertex6.y) + " " + std::to_string(result.vertex6.z) + " " +
 					std::to_string(result.vertex7.x) + " " + std::to_string(result.vertex7.y) + " " + std::to_string(result.vertex7.z) + " " +
 					std::to_string(result.vertex8.x) + " " + std::to_string(result.vertex8.y) + " " + std::to_string(result.vertex8.z) + "\n";*/
-				kitti_label += "Car 0 " + std::to_string(result.occlusion) + " " + std::to_string(0) /*dummy alpha value*/ + " " + std::to_string(result.height) + " " + std::to_string(result.width) + " " + std::to_string(result.length)+ "\n";
+				kitti_label += "Car 0 " + std::to_string(result.occlusion) + " " + std::to_string(0.0f) /*dummy alpha value*/ + " " +
+					std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + /*2D bounding box coordinates*/
+					std::to_string(result.height) + " " + std::to_string(result.width) + " " + std::to_string(result.length)+  " " + 
+					std::to_string(result.vehicle_position.x) + " " + std::to_string(result.vehicle_position.y) + " " + std::to_string(result.vehicle_position.z) + 
+					std::to_string(0.0f) + " " + std::to_string(0) + "\n";
 			}
 		}
 		fileOutput << vertexData;
-		fileOutput_label_data << label_Data;
+		//fileOutput_label_data << label_Data;
 		fileOutput_kitti_labels << kitti_label;
 	}
 	fileOutput.close();
