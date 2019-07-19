@@ -99,8 +99,8 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 			vehicle_centroid.x = 0.5*(max.x - min.x);
 			vehicle_centroid.y = 0.5*(max.y - min.y);
 			vehicle_centroid.z = 0.5*(max.z - min.z);
-			result.vehicle_position = position;
-			//result.vehicle_position = vehicle_centroid;
+			//result.vehicle_position = position;
+			result.vehicle_position = vehicle_centroid;
 			/*Following the convention of length > width*/
 			if ((max.x - min.x) > (max.y - min.y)) {
 				result.length = max.x - min.x;
@@ -223,16 +223,15 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 		source.y = position.y;
 		source.z = position.z;
 		*/
-		
-		CAM::DESTROY_ALL_CAMS(TRUE);
-		camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
-		CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
-		CAM::SET_CAM_FOV(camera, 60);
-		CAM::SET_CAM_ACTIVE(camera, TRUE);
-		WAIT(10);
-		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
-		CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
-		CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
+		//CAM::DESTROY_ALL_CAMS(TRUE);
+		//camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
+		//CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
+		//CAM::SET_CAM_FOV(camera, 60);
+		//CAM::SET_CAM_ACTIVE(camera, TRUE);
+		//WAIT(10);
+		//CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
+		//CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
+		//CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
 		origin = CAM::GET_GAMEPLAY_CAM_COORD();			//IS this same as position of the vehicle or how much offset there is? 
 		source = CAM::GET_GAMEPLAY_CAM_COORD();
 	}
@@ -300,7 +299,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			//result.vertex7.z = result.vertex7.z - origin.z;
 			//result.vertex8.z = result.vertex8.z - origin.z;
 			// TODO Change the x axis to be aligned with forward vector and +y axis to be left of vehicle. 
-			if (result.hitCoordinates.x > 120.0f) continue;					//TODO add conditions for other axes as well ??  lets see
+			if (abs(result.hitCoordinates.x) > 120.0f || abs(result.hitCoordinates.y) > 120.0f || abs(result.hitCoordinates.z) > 120.0f) continue;					//TODO add conditions for other axes as well ??  lets see
 			else {
 				vertexData += std::to_string(result.hitCoordinates.x) + " " + std::to_string(result.hitCoordinates.y) + " " + std::to_string(result.hitCoordinates.z) + " " + std::to_string(1.0f) + "\n";	//place holder values for intensity
 				//label_Data += std::to_string(r) + " " + std::to_string(g) + " " + std::to_string(b) + " " + std::to_string(result.class_instance) + "\n";		//placeholder value for instance values	
