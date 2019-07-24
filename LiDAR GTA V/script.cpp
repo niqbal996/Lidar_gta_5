@@ -32,6 +32,8 @@ struct ray {
 	Vector3 vertex1, vertex2, vertex3, vertex4, vertex5, vertex6, vertex7, vertex8;
 	float length, width, height;
 	Vector3 vehicle_position;
+	float rotate_ry; /*rotation ry around y axis of the target vehicle.*/
+	Vector3 target_entity_forward_vector;
 	bool occlusion;
 };
 
@@ -74,6 +76,7 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	result.hitCoordinates = hitCoordinates;
 	result.surfaceNormal = surfaceNormal;
 	result.hitEntityHandle = hitEntityHandle;
+	result.target_entity_forward_vector = ENTITY::GET_ENTITY_FORWARD_VECTOR(result.hitEntityHandle);
 	std::string entityTypeName = "Unknown";
 	
 
@@ -99,8 +102,13 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 			vehicle_centroid.x = 0.5*(max.x - min.x);
 			vehicle_centroid.y = 0.5*(max.y - min.y);
 			vehicle_centroid.z = 0.5*(max.z - min.z);
-			//result.vehicle_position = position;
-			result.vehicle_position = vehicle_centroid;
+			/* Get the position relative to lidar origin.*/
+			position.x = position.x - source.x;
+			position.y = position.y - source.y;
+			position.z = position.z - source.z;
+			result.vehicle_position = position;
+
+			//result.vehicle_position = vehicle_centroid;
 			/*Following the convention of length > width*/
 			if ((max.x - min.x) > (max.y - min.y)) {
 				result.length = max.x - min.x;
@@ -198,7 +206,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 	/*======================================*/
 	int classid;
 	/*Host vehicle data*/
-	Vector3 upVector, rightVector, forwardVector, position; //Vehicle position
+	Vector3 upVector, rightVector, forwardVector, position; //Ego Vehicle position
 	Hash vehicleHash = 0x50732C82;
 	Vector3 speedVector;
 	
@@ -223,15 +231,15 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 		source.y = position.y;
 		source.z = position.z;
 		*/
-		//CAM::DESTROY_ALL_CAMS(TRUE);
-		//camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
-		//CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
-		//CAM::SET_CAM_FOV(camera, 60);
-		//CAM::SET_CAM_ACTIVE(camera, TRUE);
-		//WAIT(10);
-		//CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
-		//CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
-		//CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
+		CAM::DESTROY_ALL_CAMS(TRUE);
+		camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
+		CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
+		CAM::SET_CAM_FOV(camera, 60);
+		CAM::SET_CAM_ACTIVE(camera, TRUE);
+		WAIT(10);
+		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
+		CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
+		CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
 		origin = CAM::GET_GAMEPLAY_CAM_COORD();			//IS this same as position of the vehicle or how much offset there is? 
 		source = CAM::GET_GAMEPLAY_CAM_COORD();
 	}
@@ -315,7 +323,10 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 					std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + std::to_string(1.0f) + " " + std::to_string(1.0f) + " " + /*2D bounding box coordinates*/
 					std::to_string(result.height) + " " + std::to_string(result.width) + " " + std::to_string(result.length)+  " " + 
 					std::to_string(result.vehicle_position.x) + " " + std::to_string(result.vehicle_position.y) + " " + std::to_string(result.vehicle_position.z) + " " +
-					std::to_string(1.0f) + " " + std::to_string(0.0) + "\n";
+					std::to_string(1.0f) + " " + std::to_string(0.0) + " " +
+					std::to_string(result.target_entity_forward_vector.x) + " " + std::to_string(result.target_entity_forward_vector.y) + " " + std::to_string(result.target_entity_forward_vector.z) + " " +
+					std::to_string(forwardVector.x) + " " + std::to_string(forwardVector.y) + " " + std::to_string(forwardVector.z) + " " + /*Ego vehicle forward vector*/
+					std::to_string(rightVector.x) + " " + std::to_string(rightVector.y) + " " + std::to_string(rightVector.z) + "\n";       /*Ego vehicle right vector*/
 			}
 		}
 		fileOutput << vertexData;
