@@ -43,7 +43,7 @@ Vector3 subtract_vectors(Vector3 vec1, Vector3 vec2) {
 	vec1.z = vec1.z - vec2.z;
 	return vec1;
 }
-ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectFlags, Vehicle vehicle) {
+ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectFlags) {
 	ray result;
 	float targetX = source.x + (direction.x * maxDistance);
 	float targetY = source.y + (direction.y * maxDistance);
@@ -76,7 +76,7 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	result.hitCoordinates = hitCoordinates;
 	result.surfaceNormal = surfaceNormal;
 	result.hitEntityHandle = hitEntityHandle;
-	result.target_entity_forward_vector = ENTITY::GET_ENTITY_FORWARD_VECTOR(result.hitEntityHandle);
+	
 	std::string entityTypeName = "Unknown";
 	
 
@@ -87,17 +87,15 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 			entityTypeName = "GTA.Ped";
 		}
 		/*Its possible that hit entity might not be a vehicle and then using get model on that entity will throw an error*/
-		else if (VEHICLE::IS_THIS_MODEL_A_CAR(result.hitEntityHandle) && (result.hitEntityHandle =! vehicle) ) {
+		else if (entityType == 2) {
 			entityTypeName = "GTA.Vehicle";
 			result.class_instance = entityInstance;
 			model = ENTITY::GET_ENTITY_MODEL(hitEntityHandle);
 			/*NOTE! here the right ,forward,upvector, min and max might need to be translated with respect to LIDAR origin too.*/
 			GAMEPLAY::GET_MODEL_DIMENSIONS(model, &min, &max);
 			ENTITY::GET_ENTITY_MATRIX(hitEntityHandle, &rightVector, &forwardVector, &upVector, &position); //Blue or red pill
+			result.target_entity_forward_vector = ENTITY::GET_ENTITY_FORWARD_VECTOR(result.hitEntityHandle);
 			result.occlusion = ENTITY::IS_ENTITY_OCCLUDED(hitEntityHandle);
-			//forwardVector = ENTITY::GET_ENTITY_FORWARD_VECTOR(hitEntityHandle);
-			//rightVector = forwardVector;		/*DEBUG modify after debug*/
-			//upVector = forwardVector;			/*DEBUG modify after debug*/
 			/*Get vehicle dimensions*/
 			vehicle_centroid.x = 0.5*(max.x - min.x);
 			vehicle_centroid.y = 0.5*(max.y - min.y);
@@ -167,7 +165,7 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	return result;
 }
 
-ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range, Vector3 source, Vehicle vehicle) {
+ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range, Vector3 source) {
 	Vector3 rot = CAM::GET_GAMEPLAY_CAM_ROT(2);
 	double rotationX = (rot.x + angleOffsetX) * (M_PI / 180.0);
 	double rotationZ = (rot.z + angleOffsetZ) * (M_PI / 180.0);
@@ -176,7 +174,7 @@ ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range, Vect
 	direction.x = sin(rotationZ) * multiplyXY * -1;
 	direction.y = cos(rotationZ) * multiplyXY;
 	direction.z = sin(rotationX);
-	ray result = raycast(CAM::GET_GAMEPLAY_CAM_COORD(), direction, range, -1, vehicle);
+	ray result = raycast(CAM::GET_GAMEPLAY_CAM_COORD(), direction, range, -1);
 	return result;
 }
 
@@ -217,7 +215,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 		WAIT(0);
 	}
 	//ENTITY::GET_ENTITY_MATRIX(ped, &rightVector, &forwardVector, &upVector, &position);
-	/* TODO label only cars and leave other objects */
+
 	player = PLAYER::PLAYER_ID();
 	if (PED::IS_PED_SITTING_IN_ANY_VEHICLE(ped)) {
 		vehicle = PED::GET_VEHICLE_PED_IS_USING(ped);
@@ -233,7 +231,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 		*/
 		CAM::DESTROY_ALL_CAMS(TRUE);
 		camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
-		CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.2, 0.5, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
+		CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, -5.0f, -5.0f, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
 		CAM::SET_CAM_FOV(camera, 60);
 		CAM::SET_CAM_ACTIVE(camera, TRUE);
 		WAIT(10);
@@ -258,7 +256,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			std::string entityName3 = "None";
 			int entityHash = 0;
 			unsigned char r = 0; unsigned char g = 0; unsigned char b = 0;
-			ray result = angleOffsetRaycast(x, z, range,source, vehicle);
+			ray result = angleOffsetRaycast(x, z, range,source);
 			if (result.hit)
 			{
 				r = 255; g = 255; b = 255;
