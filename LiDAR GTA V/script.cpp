@@ -85,6 +85,7 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 		int entityType = ENTITY::GET_ENTITY_TYPE(hitEntityHandle);
 		if (entityType == 1) {
 			entityTypeName = "GTA.Ped";
+
 		}
 		/*Its possible that hit entity might not be a vehicle and then using get model on that entity will throw an error*/
 		else if (entityType == 2) {
@@ -165,8 +166,8 @@ ray raycast(Vector3 source, Vector3 direction, float maxDistance, int intersectF
 	return result;
 }
 
-ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range, Vector3 source) {
-	Vector3 rot = CAM::GET_GAMEPLAY_CAM_ROT(2);
+ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range, Vector3 source, Cam camera) {
+	Vector3 rot = CAM::GET_CAM_ROT(camera, 2);
 	double rotationX = (rot.x + angleOffsetX) * (M_PI / 180.0);
 	double rotationZ = (rot.z + angleOffsetZ) * (M_PI / 180.0);
 	double multiplyXY = abs(cos(rotationX));
@@ -174,11 +175,11 @@ ray angleOffsetRaycast(double angleOffsetX, double angleOffsetZ, int range, Vect
 	direction.x = sin(rotationZ) * multiplyXY * -1;
 	direction.y = cos(rotationZ) * multiplyXY;
 	direction.z = sin(rotationX);
-	ray result = raycast(CAM::GET_GAMEPLAY_CAM_COORD(), direction, range, -1);
+	ray result = raycast(CAM::GET_CAM_COORD(camera), direction, range, -1);
 	return result;
 }
 
-void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertFovMax, double horiStep, double vertStep, int range, std::string filePath, std::string filePath_label, std::string kitti_label_path)
+void lidar(Cam camera, double horiFovMin, double horiFovMax, double vertFovMin, double vertFovMax, double horiStep, double vertStep, int range, std::string filePath, std::string filePath_label, std::string kitti_label_path)
 {
 	GAMEPLAY::SET_GAME_PAUSED(true);
 	TIME::PAUSE_CLOCK(true);
@@ -194,9 +195,10 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 	/*=======================================*/
 	Vehicle vehicle = NULL;
 	Vector3 source;
+	std::string class_name;
 	Player player = NULL;
 	Ped ped = NULL;
-	Cam camera = NULL;
+	// Cam camera = NULL;
 	Vector3 dir;
 	Vector3 pos, rotation;
 	float heading;
@@ -229,17 +231,16 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 		source.y = position.y;
 		source.z = position.z;
 		*/
-		CAM::DESTROY_ALL_CAMS(TRUE);
-		camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
-		CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, -5.0f, -5.0f, 1.5, TRUE); /*TODO if it works this is what I want to modify*/
-		CAM::SET_CAM_FOV(camera, 60);
-		CAM::SET_CAM_ACTIVE(camera, TRUE);
-		WAIT(10);
-		CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
-		CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
-		CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
-		origin = CAM::GET_GAMEPLAY_CAM_COORD();			//IS this same as position of the vehicle or how much offset there is? 
-		source = CAM::GET_GAMEPLAY_CAM_COORD();
+		//CAM::DESTROY_ALL_CAMS(TRUE);
+		//camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
+		//CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.0f, 0.0f, 1.3f, TRUE); /*TODO if it works this is what I want to modify*/
+		//CAM::SET_CAM_FOV(camera, 60);
+		//CAM::SET_CAM_ACTIVE(camera, TRUE);
+		//CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
+		//CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
+		//CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
+		origin = CAM::GET_CAM_COORD(camera);			//IS this same as position of the vehicle or how much offset there is? 
+		source = CAM::GET_CAM_COORD(camera);
 	}
 	//PED::SET_PED_INTO_VEHICLE(ped, vehicle, -1);
 	//STREAMING::SET_MODEL_AS_NO_LONGER_NEEDED(vehicleHash);
@@ -256,7 +257,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 			std::string entityName3 = "None";
 			int entityHash = 0;
 			unsigned char r = 0; unsigned char g = 0; unsigned char b = 0;
-			ray result = angleOffsetRaycast(x, z, range,source);
+			ray result = angleOffsetRaycast(x, z, range,source, camera);
 			if (result.hit)
 			{
 				r = 255; g = 255; b = 255;
@@ -267,14 +268,17 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 				if (entityName3 == "GTA.Vehicle")
 				{
 					r = 255; g = 0; b = 0;
+					class_name = "Car";
 				}
 				else if (entityName3 == "GTA.Ped")
 				{
 					r = 0; g = 255; b = 0;
+					class_name = "Pedestrian";
 				}
 				else if (entityName3 == "GTA.Prop")
 				{
 					r = 0; g = 0; b = 255;
+					class_name = "Misc";
 				}
 			}
 			result.hitCoordinates.x = result.hitCoordinates.x - origin.x;
@@ -317,7 +321,7 @@ void lidar(double horiFovMin, double horiFovMax, double vertFovMin, double vertF
 					std::to_string(result.vertex6.x) + " " + std::to_string(result.vertex6.y) + " " + std::to_string(result.vertex6.z) + " " +
 					std::to_string(result.vertex7.x) + " " + std::to_string(result.vertex7.y) + " " + std::to_string(result.vertex7.z) + " " +
 					std::to_string(result.vertex8.x) + " " + std::to_string(result.vertex8.y) + " " + std::to_string(result.vertex8.z) + "\n";*/
-				kitti_label += "Car 0 " + std::to_string(result.occlusion) + " " + std::to_string(0.0f) /*dummy alpha value*/ + " " +
+				kitti_label += class_name + " 0 " + std::to_string(result.occlusion) + " " + std::to_string(0.0f) /*dummy alpha value*/ + " " +
 					std::to_string(0.0f) + " " + std::to_string(0.0f) + " " + std::to_string(1.0f) + " " + std::to_string(1.0f) + " " + /*2D bounding box coordinates*/
 					std::to_string(result.height) + " " + std::to_string(result.width) + " " + std::to_string(result.length)+  " " + 
 					std::to_string(result.vehicle_position.x) + " " + std::to_string(result.vehicle_position.y) + " " + std::to_string(result.vehicle_position.z) + " " +
@@ -344,7 +348,7 @@ void ScriptMain()
 	srand(GetTickCount());
 	DWORD start_time;
 	DWORD elapsed_time;
-	int file_number = 0;
+	int file_number = 100;
 	bool init = TRUE;
 	int range;
 	std::string filename;
@@ -352,6 +356,13 @@ void ScriptMain()
 	std::ifstream inputFile;
 	std::string ignore;
 	double parameters[6];
+
+	Cam camera;
+	Vector3 rotation;
+	Vehicle vehicle;
+	Player player;
+	Ped ped;
+
 	while (true)
 	{
 		if (IsKeyJustUp(VK_F6))
@@ -374,10 +385,28 @@ void ScriptMain()
 				inputFile.close();
 			}
 		elapsed_time = GetTickCount() - start_time;
+		while (!ENTITY::DOES_ENTITY_EXIST(ped)) {
+			ped = PLAYER::PLAYER_PED_ID();
+			WAIT(0);
+		}
+		player = PLAYER::PLAYER_ID();
+		if (PED::IS_PED_SITTING_IN_ANY_VEHICLE(ped)) {
+			vehicle = PED::GET_VEHICLE_PED_IS_USING(ped);
+			rotation = ENTITY::GET_ENTITY_ROTATION(vehicle, 1);
+			CAM::DESTROY_ALL_CAMS(TRUE);
+			camera = CAM::CREATE_CAM("DEFAULT_SCRIPTED_CAMERA", TRUE);
+			CAM::ATTACH_CAM_TO_ENTITY(camera, vehicle, 0.0f, 0.0f, 1.3f, TRUE);
+			CAM::SET_CAM_ACTIVE(camera, TRUE);
+			CAM::SET_CAM_ROT(camera, rotation.x, rotation.y, rotation.z, 1);	//Pitch , yaw and roll			
+			CAM::SET_CAM_INHERIT_ROLL_VEHICLE(camera, TRUE);
+			CAM::RENDER_SCRIPT_CAMS(TRUE, FALSE, 0, TRUE, TRUE);
+		}
+		notificationOnLeft("Fixed camera rotation");
 		if (elapsed_time > 40000)				/*in milli seconds. if more than 30 milliseconds take a lidar screen shot*/
-		{
+		{	
+			
 			start_time = GetTickCount();
-			lidar(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], range,
+			lidar(camera, parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], range,
 				"LiDAR GTA V/velodyne/" + filename + "_" + std::to_string(file_number) + ".txt",
 				"LiDAR GTA V/labels/" + label_filename + "_" + std::to_string(file_number) + ".txt",
 				"LiDAR GTA V/kitti_labels/" + label_filename + "_kitti_" + std::to_string(file_number) + ".txt");
