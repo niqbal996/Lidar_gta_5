@@ -23,7 +23,7 @@ LiDAR GTA V
 3. Get inside a car of your choice manually. 
 4. Press G to start the automatic driving script from VAutodrive. 
 5. Press F6 to start logging the data. Note this will store one every 30/40 seconds. Watch ur storage. 
-5. Output files are point cloud data and the respective labels like [KITTI](http://www.cvlibs.net/datasets/kitti/) LiDAR dataset. 
+6. Output files are point cloud data and the respective labels like [KITTI](http://www.cvlibs.net/datasets/kitti/) LiDAR dataset. 
 7. These files are then processed with the python blank_point_remover.py file. 
 8. This will generate point cloud files with labels of objects in it similar to KITTI. 
 
@@ -36,7 +36,7 @@ LiDAR GTA V
 ## Contributions
 * Modified the point cloud data to have similar values like real LiDAR data. Shifted the world origin to source of ray cast. 
 * Added 3D bounding box labels similar to KITTI for vehicles with rotations.
-* 
+* Added funtionality for logging large amount of data with automated driving. 
 
 ## TODO 
 * Fix the bug for wrong rotations of the bounding boxes for some of the LiDAR samples.
