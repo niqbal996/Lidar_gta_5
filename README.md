@@ -48,8 +48,8 @@ LiDAR GTA V
 
 ## License 
 * This repository is build on top of the repository from the author @[UsmanJafri](https://github.com/UsmanJafri/LiDAR-GTA-V) and is only intended for educational research purpose. 
-* Some functions were inspired from [DeepGTA 5](https://github.com/aitorzip/DeepGTAV) as well. 
+
 
 ## Acknowledgements
-
 * [Native Trainer](http://www.dev-c.com/gtav/scripthookv/) (a ScriptHookV sample) was used as base project to import configuration.
+* Some functions were inspired from [DeepGTA 5](https://github.com/aitorzip/DeepGTAV) as well. 
