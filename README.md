@@ -8,6 +8,8 @@ LiDAR GTA V
 
 * [Grand Theft Auto V](https://store.steampowered.com/app/271590/Grand_Theft_Auto_V/)
 * [ScriptHookV by Alexander Blade](http://www.dev-c.com/gtav/scripthookv/)
+* [VAutodrive](https://www.gta5-mods.com/scripts/vautodrive) (optional)
+* [GTA 5 LauncherBypass](https://www.gta5-mods.com/tools/gtavlauncherbypass) (Optional)
 
 ## Installation
 
@@ -27,7 +29,7 @@ LiDAR GTA V
 7. These files are then processed with the python blank_point_remover.py file. 
 8. This will generate point cloud files with labels of objects in it similar to KITTI. 
 
-## Requirements
+## Version dependencies
 
 * You will need Visual Studio 2017 or higher to open the project.
 * Any contributions to the project are welcomed, it's recommended to use GitHub [Pull requests](https://help.github.com/articles/using-pull-requests/).
