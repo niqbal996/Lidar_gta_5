@@ -2,7 +2,7 @@ LiDAR GTA V
 ============================
 *A plugin for Grand Theft Auto V that generates a labeled LiDAR point cloud form the game environment.*
 
-<img src="/samples/Capture2.PNG">
+<img src="/samples/LiDAR Sample - Traffic.PNG">
 
 ## Requirements
 
