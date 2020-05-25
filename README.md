@@ -17,8 +17,8 @@ LiDAR GTA V
 2. Copy-paste *LiDAR GTA V.asi* and the *LiDAR GTA V* folder found in [*bin/Release*](https://github.com/UsmanJafri/LiDAR-GTA-V/tree/master/LiDAR%20GTA%20V/bin/Release) into your GTA-V directory (the folder containing *GTAV.exe*)
 3. Install [VAutodrive](https://www.gta5-mods.com/scripts/vautodrive) for automated driving and log data over the night.
 4. Install [GTA 5 LauncherBypass](https://www.gta5-mods.com/tools/gtavlauncherbypass) to bypass the loading screen and go directly into story mode. Trust me you will need this. 
-5. If you are seeing the error
->LINK : fatal error LNK1561: entry point must be defined 
+5. If you are seeing the error when building the solution:
+>LINK : fatal error LNK1561: entry point must be defined< 
 try changing the VS configuration to **Release** Mode and **x64** configuration. 
 
 ## How to use
