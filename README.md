@@ -28,8 +28,8 @@ LiDAR GTA V
 4. Press G to start the automatic driving script from VAutodrive. 
 5. Press F6 to start logging the data. Note this will store one every 30/40 seconds. Watch ur storage. 
 6. Output files are point cloud data and the respective labels like [KITTI](http://www.cvlibs.net/datasets/kitti/) LiDAR dataset. 
-7. These files are then processed with the python blank_point_remover.py file. 
-8. This will generate point cloud files with labels of objects in it similar to KITTI. 
+7. These files are then processed with the python **kitti_like_data_generator.py** file in **/gta_util**. 
+8. This will generate point cloud files with labels of objects in it similar to KITTI dataset format. 
 
 ## Version dependencies
 
