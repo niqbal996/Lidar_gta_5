@@ -1,16 +1,16 @@
 import numpy as np
-from matplotlib import pyplot
-from mpl_toolkits.mplot3d import Axes3D
+# from matplotlib import pyplot
+# from mpl_toolkits.mplot3d import Axes3D
 from os import path
 import glob
 import os
 import math
-import pickle
+# import pickle
 
-data_set_path = r'E:\GTA_sequence\fixed_dataset_raycast\set7'
+data_set_path = r'C:\Users\naeem\Desktop\GTA_samples'
 
 #Preprocessed DATA OUTPUT DIRECTORY
-output_directory = r'E:\GTA_sequence\fixed_dataset_raycast\set7\sequence'
+output_directory = r'C:\Users\naeem\Desktop\GTA_samples\KITTI'
 output_directory = os.path.join(data_set_path, output_directory)
 output_point_cloud_dir = os.path.join(output_directory, "velodyne")
 output_ground_truth_dir = os.path.join(output_directory, "labels")
@@ -29,6 +29,10 @@ bounding_box_vertices = np.zeros((8, 3))     #Spatial coordinates for Eight poin
 
 
 def lidar_2_cam(vec1):
+    '''
+    :param vec1: input vector in lidar coordinates system
+    :return: output vector in camera coordinate system
+    '''
     x, y, z = float(vec1[0]), float(vec1[1]), float(vec1[2])
     R_xyz = np.array([[0.0, -1.0, 0.0],
                       [0.0, 0.0, -1.0],
@@ -79,6 +83,11 @@ def rot_a2b(vec1, vec2):
 
 
 def rot_angle(point, vec2):
+    '''
+    :param point: rotate a given point for the angle between x axis and vec2
+    :param vec2: vec2 here is the forward heading vector of the ego vehicle
+    :return: rotated point
+    '''
     vec1 = np.array([1, 0, 0])      #positive x axis unit vector
     theta = angle(vec1, vec2)
 
@@ -93,6 +102,11 @@ def rot_angle(point, vec2):
     return vec1
 
 def rot_angle_2(point, vec2):
+    '''
+    :param point: Input 3D point that you want to rotate to make it parallel to vec2
+    :param vec2: Target vector orientation
+    :return: rotated point parralel to vec2
+    '''
     vec1 = point      # position vector of given point
     theta = angle(vec1, vec2)
 
@@ -112,7 +126,7 @@ if path.exists(point_cloud_dir) and  path.exists(ground_truth_kitti_dir):
     ground_truth_kitti_files = sorted(glob.glob(os.path.join(ground_truth_kitti_dir, "*.txt")))
     assert(len(point_cloud_files) == len(ground_truth_kitti_files))
 
-    for file_number in range(82, len(point_cloud_files)):
+    for file_number in range(0, len(point_cloud_files)):# last file number
         current_point_cloud_file = os.path.join(point_cloud_dir, point_cloud_files[file_number])
         current_ground_truth_kitti_file = os.path.join(ground_truth_kitti_dir, ground_truth_kitti_files[file_number])
 
@@ -220,7 +234,7 @@ if path.exists(point_cloud_dir) and  path.exists(ground_truth_kitti_dir):
                             f.write('%s ' % entry)
 
             # TODO get the bounding box values from instance values in ground truth files.
-            print("[INFO] ", str("{0:.2f}".format((file_number / len(point_cloud_files) * 100.0))),
+            print("[INFO] ", str("{0:.2f}".format(((file_number+1) / len(point_cloud_files)) * 100.0)),
                   " percent of the files have been processed. . . {} ".format(points_counter),
                   str(os.path.basename(point_cloud_files[file_number])))
     print("[INFO] Total ", points_counter, " number of points have been removed")
